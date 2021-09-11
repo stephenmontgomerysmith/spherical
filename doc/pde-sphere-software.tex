@@ -1,0 +1,346 @@
+\documentclass{amsart}
+
+\usepackage{psfrag}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{amsmath,amsfonts}
+%\usepackage{fullpage}
+
+\newcommand\br{{\mathbf r}}
+\newcommand\w{{\mathbf w}}
+\newcommand\bL{{\mathbf L}}
+\newcommand\boldf{{\mathbf f}}
+\newcommand\bz{{\mathbf z}}
+\newcommand\bnabla{{\boldsymbol \nabla}}
+\newcommand\e{{\mathbf e}}
+\newcommand\q{{\mathbf q}}
+
+\begin{document}
+
+\section{Differential equations on the unit sphere}
+
+The objective of the software is to provide a systematic spherical harmonic method to numerically solve partial differential equations on the two
+dimensional sphere, $S = \{\br = (x,y,z):|\br| = x^2+y^2+z^2 = 1\}$, or in spherical coordinates, $\br = (x,y,z) = (\sin\theta
+\cos\phi,\sin\theta\sin\phi,\cos\theta)$, where $0\le\theta\le\pi$, $0\le\phi\le2\pi$.  The partial differential equations considered here are of the
+form
+\begin{equation}
+\label{pde}
+\frac\partial{\partial t}\psi = F(\br,\bnabla) \psi,
+\end{equation}
+where $\psi$ is a function (for example, the probability distribution function) defined on the sphere. Here $\bnabla$ is the gradient operator
+restricted to the sphere that is defined as
+\begin{equation}
+\begin{split}
+\bnabla &= (\nabla_x,\nabla_y,\nabla_z) \\
+&= \left(\cos\theta\cos\phi\frac{\partial}{\partial\theta} - \csc\theta\sin\phi \frac{\partial}{\partial\phi},\cos\theta\sin\phi\frac{\partial}{\partial\theta} + \csc\theta\cos\phi \frac{\partial}{\partial\phi},-\sin\theta\frac{\partial}{\partial\theta} \right) \\
+&= \left((1-x^2)\frac\partial{\partial x}-xy\frac\partial{\partial y}-xz\frac\partial{\partial z},
+         -xy\frac\partial{\partial x}+(1-y^2)\frac\partial{\partial y}-yz\frac\partial{\partial z},\right.\\
+&\qquad\qquad\left.
+         -xz\frac\partial{\partial x}-yz\frac\partial{\partial y}+(1-z^2)\frac\partial{\partial
+         z}\right) .
+\end{split}
+\end{equation}
+In the above, $F$ is a polynomial in six variables, with the proviso that it matters in which order the terms of each monomial part are written. We
+believe that this includes many of the published, if not all, of the partial differential equations that describe the evolution of
+the orientation distribution function for short fiber suspensions.
+
+The spherical harmonic approach converts equation~\eqref{pde} to a
+system of ordinary differential equations written as
+\begin{equation}
+\label{spherical-pde}
+\frac\partial{\partial t} \hat\psi_l^m = \sum_{l'=0}^\infty \sum_{m'=-l'}^{l'} c_{l,l'}^{m,m'} \hat\psi_{l'}^{m'} ,
+\end{equation}
+where $\hat\psi_l^m$ ($l \ge 0$, $|m| \le l$) are the spherical harmonic coefficients of $\psi$, defined in
+equation~\eqref{spherical-harmonic-coefficient} below, and $c_{l,l'}^{m,m'}$ are the coefficients defined through equation~\eqref{decompose F}.
+
+The software provides a systematic algorithm for calculating the coefficients $c_{l,l'}^{m,m'}$ appearing in equation~\eqref{spherical-pde} (and also in equation~\eqref{decompose F} below). This algorithm makes it possible to readily solve all differential
+equations on the unit sphere of the form shown in equation~\eqref{pde}.
+
+\section{Description of the model equations}
+
+To illustrate the software, we consider variations of Jeffery's equation \cite{jeffery:23} which describes the motion of fibers in a
+moving fluid with vorticity $\w$ and rate of deformation tensor $\Gamma$. Jeffery's equation is
+often written in terms of the fiber orientation distribution function $\psi$ and the fiber aspect ratio parameter $-1 \le \lambda\le1$ as
+\begin{equation}
+\label{jeffery's}
+\frac\partial{\partial t}\psi = J \psi := -
+\tfrac12\bnabla\cdot(\w \times \br \psi + \lambda(\Gamma\cdot\br -
+\Gamma:\br\br\br) \psi) ,
+\end{equation}
+where we note that the right hand side is in the form of equation~\eqref{pde}. A variation of equation~\eqref{jeffery's} is Jeffery's equation with
+rotary diffusion as expressed by Bird \cite{bird:87b} as
+\begin{equation}
+\label{jeffery's-folgar-tucker}
+\frac\partial{\partial t}\psi = J \psi + \bnabla\cdot\bnabla(D_r
+\psi) ,
+\end{equation}
+where $D_r$ captures the effect of fiber interaction and depends upon the flow kinetics. Folgar and Tucker \cite{folgar:84} selected $D_r = C_I \dot{\gamma}$ where $\dot{\gamma} =
+\left(\frac12\Gamma:\Gamma\right)^{1/2}$ and $C_I$ is a constant that depends upon the volume fraction and aspect ratio of the
+fibers.
+
+Another example is anisotropic diffusion such as that proposed by Koch \cite{koch:95} in the
+differential equation
+\begin{equation}
+\label{koch} \frac\partial{\partial t}\psi = J \psi +
+\bnabla\cdot(I-\br\br)\cdot D_r\cdot\bnabla\psi = J \psi +
+(\bnabla-2\br)\cdot D_r\cdot\bnabla\psi
+\end{equation}
+where the anisotropic diffusion matrix $D_r$ is defined in terms of the model parameters $C_1$ and $C_2$ (see Koch \cite{koch:95} for more detail) as
+\begin{equation}
+\label{kochDr}
+D_r = C_1 {\dot\gamma}^{-1} (\Gamma:\mathbb A:\Gamma)I + C_2
+{\dot\gamma}^{-1} \Gamma:\mathcal A:\Gamma .
+\end{equation}
+In the above, the $(I-\br\br)$ term serves to project vectors onto the surface of the sphere. We note that this term is not explicitly included in
+Koch's formula in \cite{koch:95}, however it's existence is implied in the paragraph following the original introduction.
+
+The anisotropic diffusion matrix $D_r$ defined in equation~\eqref{kochDr} is written in terms of the 2nd, 4th and 6th order moment tensors of $\psi$
+which are, respectively, defined as
+\begin{equation}
+\label{momenttensors}
+ A := \int_S \psi \br\br \, d\br ,\qquad
+\mathbb A := \int_S \psi \br\br\br\br \, d\br ,\qquad \text{and}
+\qquad \mathcal A := \int_S \psi \br\br\br\br\br\br \, d\br .
+\end{equation}
+In these integrals, we adopt the common definition for the integral of a function $F(\br)$ over the surface of the unit sphere as
+\begin{equation}
+\int_S F(\br) \, dr := \int_{\theta=0}^\pi \int_{\phi=0}^{2\pi}
+F(\br) \sin\theta\,d\phi\,d\theta ,
+\end{equation}
+and we note here that the moment tensors $A$, $\mathbb A$, and $\mathcal{A}$ can be expressed in terms of spherical harmonics as shown below in
+equation~\eqref{moment tensor}.
+
+Care must be exercised in not confusing the differential geometry on the surface of the sphere $S$ with the differential geometry
+in the three dimensional space $\mathbb R^3$ it is embedded in.  Thus, for example, integration by parts
+is the slightly unexpected form
+\begin{equation}
+\label{by-parts}
+\int_S \boldf \cdot \bnabla g\, d\br  = - \int_S (\bnabla\cdot (I-\br\br)\cdot\boldf) g\, d\br = \int_S ((2\br - \bnabla)\cdot\boldf)g \, d\br ,
+\end{equation}
+which reduces to the usual integration by parts when $\boldf$ is
+tangential to the surface of the sphere. We also recall the so
+called angular momentum operator
+\begin{equation}
+\label{ang-momentum-ops}
+\bL = -i\br\times\bnabla = (L_x,L_y,L_z) =
+-i\left(y\frac\partial{\partial z} - z\frac\partial{\partial y} ,
+z\frac\partial{\partial x} - x\frac\partial{\partial z} ,
+x\frac\partial{\partial y} - y\frac\partial{\partial x} \right) ,
+\end{equation}
+where, as usual,  $i$ denotes the complex number satisfying $i^2=-1$.  Integration by parts for the angular momentum operator is more straightforward, that is,
+\begin{equation}
+\label{by-parts-l}
+\int_S \boldf \cdot \bL g\, d\br  = -\int_S (\bL\cdot\boldf) g\, d\br .
+\end{equation}
+Note that $\bL\times\bL = \bnabla\times\bnabla = i\bL$, and in particular $\nabla_x$, $\nabla_y$ and $\nabla_z$
+do not commute with each other. We also use the formulae $\br\cdot\bnabla f=\br\cdot\bL f=\bL\cdot(\br f) = 0$ and $\bnabla\cdot(\br f) = 2f$.
+
+\section{Spherical harmonics solutions}
+
+Any square integrable function $\psi$ defined on the unit sphere may be written as a Fourier series like representation in terms of the spherical
+harmonics $Y_l^m(\theta,\phi)$ for $l \ge 0$ and $|m| \le l$ as
+\begin{equation}
+\label{spherical-series}
+\psi = \sum_{l=0}^\infty \sum_{m=-l}^l
+\hat\psi_l^m Y_l^m ,
+\end{equation}
+where $Y_l^m$ are the spherical harmonic functions as defined in \cite{weisstein:06a}.
+The coefficients $\hat\psi_l^m$ in equation~\eqref{spherical-series}
+are evaluated from
+\begin{equation}
+\label{spherical-harmonic-coefficient}
+\hat\psi_l^m = \int_S \psi
+\bar Y_l^m d\br .
+\end{equation}
+
+To obtain the system of ordinary differential equations~\eqref{spherical-pde}, we integrate equation~\eqref{pde} against $\bar Y_l^m$ over the unit
+sphere to obtain its adjoint or weak form as
+\begin{equation}
+\label{weakform}
+\frac\partial{\partial t} \int_S \psi \bar Y_l^m
+\,d\br = \int_S \psi F^*(\br,\bnabla) \bar Y_l^m \,d\br ,
+\end{equation}
+where the right hand side follows from integration by parts and the term $F^*$ denotes any polynomial $F$ in which each monomial term is written in
+reverse order with the substitution of $2\br - \bnabla$ for $\bnabla$. Therefore, applying equation~\eqref{weakform}, Jeffery's
+equation~\eqref{jeffery's} is defined by
+\begin{equation}
+J^* = \tfrac12(\w\cdot(\br\times\bnabla) + \lambda\br\cdot\Gamma\cdot\bnabla),
+\end{equation}
+Similarly, the two extensions of Jeffery's equation that include diffusion appearing in equations~\eqref{jeffery's-folgar-tucker} and~\eqref{koch}
+(expressed as $\frac\partial{\partial t}\psi = F \psi$), respectively become
+\begin{equation}
+\label{FStarFT}
+F^* = J^* + D_r \bnabla\cdot\bnabla ,
+\end{equation}
+and
+\begin{equation}
+F^* = J^* + (\bnabla-2\br)\cdot D_r\cdot\bnabla .
+\end{equation}
+In all cases, we can decompose
+\begin{equation}
+\label{decompose F}
+F^*(\br,\bnabla) \bar Y_l^m = \sum_{l'=0}^\infty \sum_{m'=-l'}^{l'} c_{l,l'}^{m,m'} \bar Y_{l'}^{m'} ,
+\end{equation}
+and therefore obtain the spherical harmonic representation shown in equation~\eqref{spherical-pde} above.
+
+\section{The ``spherical'' program algorithm}
+
+An automated algorithm is implemented to compute the coefficients $c_{l,l'}^{m,m'}$ in equation~\eqref{decompose F} for
+any differential equation satisfying the criteria given above (and, therefore, the $\mathcal C_{l,m}$ in equation~\eqref{moment tensor}). The
+algorithm is to recursively apply the replacement rules described in equation~\eqref{rules} until no further substitutions can be made. Here ``op''
+denotes any of $z$, $L_z$, $L_+$, or $L_-$ operations, and $\mathcal Y$ denotes any linear combination of the $\bar Y_l^m$'s.
+\begin{equation}
+\label{rules}
+\begin{split}
+\text{op}(\mathcal Y \pm c \bar Y_l^m) &\to \text{op}(\mathcal Y) \pm c \, \text{op}(\bar Y_l^m), \\
+x \mathcal Y &\to  z i L_y(\mathcal Y) - i L_y(z\mathcal Y), \\
+y \mathcal Y &\to  i L_x(z\mathcal Y) - z i L_x(\mathcal Y), \\
+z\bar Y_l^m &\to \sqrt{\frac{(l+m)(l-m)}{(2l-1)(2l+1)}} \bar Y_{l-1}^m + \sqrt{\frac{(l+m+1)(l-m+1)}{(2l+1)(2l+3)}} \bar Y_{l+1}^m ,\\
+\nabla_x \mathcal Y &\to z i L_y(\mathcal Y) - y i L_z(\mathcal Y),  \\
+\nabla_y \mathcal Y &\to x i L_z(\mathcal Y) - z i L_x(\mathcal Y),  \\
+\nabla_z \mathcal Y &\to y i L_x(\mathcal Y) - x i L_y(\mathcal Y),  \\
+L_x (\mathcal Y) &\to \tfrac 12 \left(L_+ (\mathcal Y) + L_- (\mathcal Y)\right), \\
+L_y (\mathcal Y) &\to -\tfrac i2 \left(L_+ (\mathcal Y) - L_- (\mathcal Y)\right), \\
+L_z \bar Y_l^m &\to -m\bar Y_l^m ,\\
+L_+ \bar Y_l^m &\to - \sqrt{(l+m)(l-m+1)}\bar Y_l^{m-1}, \\
+L_- \bar Y_l^m &\to - \sqrt{(l-m)(l+m+1)}\bar Y_l^{m+1}
+\end{split}
+\end{equation}
+It is important to note that $x \bar Y_l^m$, $y \bar Y_l^m$, $z \bar Y_l^m$, $\nabla_x\bar Y_l^m$, $\nabla_y \bar Y_l^m$, and $\nabla_z \bar Y_l^m$
+involve $\bar Y_{l'}^{m'}$ for $l'$ and $m'$ that differ from $l$ and $m$, respectively, by at most one.  The script described in the appendix uses
+the recursive algorithm in equation~\eqref{rules} to create threaded functions in the programming language
+C which in turn are used in an iterative procedure for computing the solution to the differential equation in equation~\eqref{pde}.
+
+Moment tensors may be computed using this algorithm as well. For example, to compute the 6th order moment tensor $\mathcal A$ in
+equation~\eqref{momenttensors} we simply expand
+\begin{equation}
+\label{expand Y_0^0} \br\br\br\br\br\br \bar Y_0^0 = \sum_{l=0}^6
+\sum_{m=-l}^l \mathcal C_{l,m} \bar Y_l^m,
+\end{equation}
+where $\mathcal C_{l,m}$ is the tensor of rank six composed of coefficients calculated by applying $x$, $y$ and $z$ to $\bar Y_0^0$ six times using the algorithm. It follows that since $\bar Y_0^0 = 1/\sqrt{4\pi}$, the 6th order orientation tensor
+becomes
+\begin{equation}
+\label{moment tensor} \mathcal A = \sqrt{4\pi} \int_S \psi
+\br\br\br\br\br\br \bar Y_0^0 \, d\br = \sqrt{4\pi} \sum_{l=0}^6
+\sum_{m=-l}^l \mathcal C_{l,m} \hat\psi_l^m ,
+\end{equation}
+where the orthogonality of the spherical harmonics are used to simplify the final result.
+
+\section{The ``spherical'' software package}
+
+The program developed to implement our spherical harmonics
+simulation procedure described above which computes the coefficients
+in equation~\eqref{spherical-pde}, and then convert these terms into
+a C program, may be found at
+\url{http://www.math.missouri.edu/~stephen/software/spherical}. The
+program is written in \emph{perl}, and makes use of either the
+commercial computer algebra system \emph{Mathematica} by Wolfram
+Research, or the open-source computer algebra system \emph{Maxima}.
+The scripts are designed to work in a Unix like environment.
+
+The program that evaluates spherical harmonics coefficients is a
+\emph{perl} script which applies the rules in~\eqref{rules}. It is
+invoked with the command sequence ``{\tt perl expand-method.pl}''.
+The user may type in an expression involving {\tt x}, {\tt y}, {\tt
+z}, {\tt dx}, {\tt dy}, {\tt dz}, {\tt lx}, {\tt ly}, or {\tt lz}
+representing ``multiply by $x$,'' ``multiply by $y$,'' ``multiply by
+$z$,'' $\nabla_x$, $\nabla_y$, $\nabla_z$, $L_x$, $L_y$, or $L_z$
+respectively, or any number, including {\tt I} for $i$, and any
+appropriate combination of parentheses, addition and subtraction,
+and ``{\tt *}'' which represents composition of the operators.  It
+outputs a sequence of lines, which when added together, represents
+the effect of the expression upon $\bar Y_l^m$.  Each line has three
+entries separated by semicolons, $l'$;$m'$;$c$, and represents
+$c\bar Y_{l+l'}^{m+m'}$.  The third entry is written in the
+programming language C, using complex numbers as described in
+\cite{c:99}.  So, for example, the input
+\begin{verbatim}
+%perl expand-method.pl
+> -2*I*(dy-y)
+\end{verbatim}
+yields the output
+\begin{verbatim}
+-1;-1;((l*sqrt(-1+l+m)*sqrt(l+m))/(sqrt(-1+2*l)*sqrt(1+2*l)))+(0)*I
+-1;1;((l*sqrt(-1+l-m)*sqrt(l-m))/(sqrt(-1+2*l)*sqrt(1+2*l)))+(0)*I
+1;-1;(((1+l)*sqrt(1+l-m)*sqrt(2+l-m))/(sqrt(1+2*l)*sqrt(3+2*l)))+(0)*I
+1;1;(((1+l)*sqrt(1+l+m)*sqrt(2+l+m))/(sqrt(1+2*l)*sqrt(3+2*l)))+(0)*I
+\end{verbatim}
+This result reflects the equation
+\begin{equation*}
+\begin{split}
+-2i(\nabla_y - y)\bar Y_l^m = &
+\tfrac{l\sqrt{(l+m-1)(l+m)}}{\sqrt{(2l-1)(2l+1)}} \bar Y_{l-1}^{m-1}
++ \tfrac{l\sqrt{(l-m-1)(l-m)}}{\sqrt{(2l-1)(2l+1)}} \bar Y_{l-1}^{m+1} \\
+& + \tfrac{(l+1)\sqrt{(l-m+1)(l-m+2)}}{\sqrt{(2l+1)(2l+3)}} \bar Y_{l+1}^{m-1}
++ \tfrac{(l+1)\sqrt{(l+m+1)(l+m+2)}}{\sqrt{(2l+1)(2l+3)}} \bar Y_{l+1}^{m+1} .
+\end{split}
+\end{equation*}
+
+The program ``{\tt perl expand-method.pl}'' is called by another
+script invoked as ``{\tt perl expand-iterate.pl <filename>}'' which
+converts a configuration file into a C program to numerically solve
+the spherical harmonics differential equation. For example,
+Jeffery's equation (written here in weak form) with Koch diffusion
+can be written as below
+\begin{verbatim}
+void compute_psidot(complex* psidot, complex* psi,
+                    double lambda, double w[3], double g[3][3]) {
+  double a4[3][3][3][3], a6[3][3][3][3][3][3], Dr[3][3];
+
+  tensor4(psi,a4); tensor6(psi,a6);
+  ... compute Dr from g, a4 and a6 ...
+
+  @spherical_iterate {
+    psidot[@index] =
+      /* Jeffery's equation */
+        w[0]*@method(psi,0.5*y*dz-0.5*z*dy)
+      + w[1]*@method(psi,0.5*z*dx-0.5*x*dz)
+      + w[2]*@method(psi,0.5*x*dy-0.5*y*dx)
+      + lambda*g[0][0]*@method(psi,0.5*x*dx)
+      + lambda*g[0][1]*@method(psi,0.5*x*dy+0.5*y*dx)
+      + lambda*g[0][2]*@method(psi,0.5*x*dz+0.5*z*dx)
+      + lambda*g[1][1]*@method(psi,0.5*y*dy)
+      + lambda*g[1][2]*@method(psi,0.5*y*dz+0.5*z*dy)
+      + lambda*g[2][2]*@method(psi,0.5*z*dz)
+      /* Koch diffusion */
+      + Dr[0][0]*@method(psi,(dx-2*x)*dx)
+      + Dr[0][1]*@method(psi,(dx-2*x)*dy+(dy-2*y)*dx)
+      + Dr[0][2]*@method(psi,(dx-2*x)*dz+(dz-2*z)*dx)
+      + Dr[1][1]*@method(psi,(dy-2*y)*dy)
+      + Dr[1][2]*@method(psi,(dy-2*y)*dz+(dz-2*z)*dy)
+      + Dr[2][2]*@method(psi,(dz-2*z)*dz);
+  }
+}
+\end{verbatim}
+
+To calculate the coefficients for the moment tensors, as in
+equation~\eqref{expand Y_0^0}, if the environmental variable {\tt
+TENSOR} is set to a non-zero value, then {\tt expand-method.pl}
+applies the input expression to $\bar Y_0^0$, and outputs the
+answers in floating point format.  So, for example the input
+\begin{verbatim}
+%env TENSOR=1 perl expand-method.pl
+> x*y*z*z
+\end{verbatim}
+yields
+\begin{verbatim}
+2;-2;(0)+(-0.026082026547865053022)*I
+2;2;(0)+(0.026082026547865053022)*I
+4;-2;(0)+(-0.030116930096841707924)*I
+4;2;(0)+(0.030116930096841707924)*I
+\end{verbatim}
+This results reflects the 1233 component of 4th order moment tensor
+\begin{equation*}
+\mathbb A_{1233} =
+i\sqrt{4\pi}\left(\tfrac{\sqrt{30}}{210}(\hat\psi_2^2-\hat\psi_2^{-2})
++\tfrac{\sqrt{10}}{105}(\hat\psi_4^2-\hat\psi_4^{-2})\right).
+\end{equation*}
+This is used by ``{\tt perl make-tensor.pl $n$}'' and ``{\tt perl
+make-reverse-tensor.pl $n$}'', which create C programs to convert,
+respectively, spherical harmonic coefficients to moment tensors of
+rank $n$, and vice-versa.
+
+\bibliographystyle{plain}
+\bibliography{info_08}
+
+\end{document}
