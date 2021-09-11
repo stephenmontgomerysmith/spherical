@@ -19,6 +19,8 @@
 
 \section{Differential equations on the unit sphere}
 
+The theoretical underpinnings of this package are described in \cite{montgomerysmith:10}.
+
 The objective of the software is to provide a systematic spherical harmonic method to numerically solve partial differential equations on the two
 dimensional sphere, $S = \{\br = (x,y,z):|\br| = x^2+y^2+z^2 = 1\}$, or in spherical coordinates, $\br = (x,y,z) = (\sin\theta
 \cos\phi,\sin\theta\sin\phi,\cos\theta)$, where $0\le\theta\le\pi$, $0\le\phi\le2\pi$.  The partial differential equations considered here are of the
@@ -232,7 +234,7 @@ The program developed to implement our spherical harmonics
 simulation procedure described above which computes the coefficients
 in equation~\eqref{spherical-pde}, and then convert these terms into
 a C program, may be found at
-\url{http://www.math.missouri.edu/~stephen/software/spherical}. The
+\url{https://github.com/stephenmontgomerysmith/spherical}. The
 program is written in \emph{perl}, and makes use of either the
 commercial computer algebra system \emph{Mathematica} by Wolfram
 Research, or the open-source computer algebra system \emph{Maxima}.
