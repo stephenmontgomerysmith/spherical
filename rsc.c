@@ -1,37 +1,38 @@
 #include "spherical.h"
 
-extern double kappa;
 static void check_for_ip_rights();
 
-void compute_psidot_rsc(COMPLEX* psidot, COMPLEX* psi) {
-  double a2[3][3];
-  double da2[3][3];
-  double collapsed_da2[3][3];
-  double evec[3][3], eval[3];
-  double inner;
+void compute_psidot_rsc(REAL* psidot, REAL* psi, param_list_t *param) {
+  REAL a2[3][3],aa2[9];
+  REAL da2[3][3];
+  REAL collapsed_da2[3][3];
+  REAL evec[9], eval[3];
+  REAL inner;
   int i,j,k;
 
   check_for_ip_rights();
 
   tensor2(psi,a2);
+  for (i=0;i<3;i++) for (j=0;j<3;j++)
+    aa2[i*3+j] = a2[i][j];
   tensor2(psidot,da2);
 
 /* collapsed_da2 = M:da2, where M = sum_{i=1}^3 e_i e_i e_i e_i, where
    e_i are the normalized eigenvectors of a2. */
-  diagonalize_sym(3, a2, eval, evec);
+  diagonalize_sym(3, aa2, eval, evec);
   memset(collapsed_da2,0,sizeof(collapsed_da2));
   for (i=0;i<3;i++) {
     inner = 0;
     for (j=0;j<3;j++) for (k=0;k<3;k++)
-      inner += evec[i][j]*evec[i][k]*da2[k][j];
+      inner += evec[i*3+j]*evec[i*3+k]*da2[k][j];
     for (j=0;j<3;j++) for (k=0;k<3;k++)
-      collapsed_da2[j][k] += evec[i][j]*evec[i][k]*inner;
+      collapsed_da2[j][k] += evec[i*3+j]*evec[i*3+k]*inner;
   }
 
 /* Add to psidot: -(1-kappa) times collapsed_da2 converted to spherical
    harmonics. */
   for (i=0;i<3;i++) for (j=0;j<3;j++)
-    collapsed_da2[i][j] *= -(1-kappa);
+    collapsed_da2[i][j] *= -(1-param->kappa);
   reverse_tensor2(collapsed_da2,psidot);
 }
 

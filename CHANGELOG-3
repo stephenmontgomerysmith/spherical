@@ -1,0 +1,92 @@
+03-23-10 Version 3.13 released.
+03-23-10 Added a small "fudge factor" so that floating point problems in
+         successively adding h to t don't cause the last line to be written
+         twice for fixed point methods.
+
+03-09-10 Version 3.12 released.
+03-09-10 Corrected bug in condon_shortley in derivs.c: (m%2) changed to (m&1).
+
+02-18-10 Version 3.11 released.
+02-18-10 Added syntax error checking for numbers in parameters file.
+02-18-10 Fixed bug in which output to stdout produced by "-v<number>" was
+         corrupted when print_daij etc set.
+
+11-26-09 Version 3.10 released.
+11-26-09 Removed reverse_tensor6, because Mathematica 7.0 seems unable to
+         perform the calculations to make the source code.
+
+06-17-09 Version 3.09 released.
+06-17-09 Added print_daij, print_daijkl, print_daijklmn.
+
+03-04-09 Version 3.08 released.
+03-04-09 Removed piecewise_fun.  Replaced it with strings representing
+         formulae.
+         Added evaluate-string.c.  Changes to psidot-vl and psidot-vd.
+
+02-26-09 Version 3.07 released.
+02-26-09 Realized that psidot-dd and psidot-dd-2 are identical!  Removed
+         psidot-dd-2.
+02-26-09 Moved get_parameters into get-param.c.
+02-26-09 Moved verbose, verbose_print and outfilename from being global, to
+         param_list_t.
+02-26-09 Removed Dr as part of param.  It is now where it should be, as a local
+         variable in psidot.conf and psidot-vl.conf.
+02-26-09 Removed do_manage_stiffness.  If I decide to put it back, it will
+         be done in a more consistent manner.
+02-25-09 Small correction to ode-rkf-23.c.
+
+02-24-09 Version 3.06 released.
+02-24-09 Made ode_rkf_23 the default.
+02-23-09 Added ode_rkf_23, Runge-Kutta-Fehlberg 2,3 method.
+
+02-23-09 Version 3.05 released.
+02-23-09 Put back the cross-compiling from FreeBSD using ming32.  The trouble
+         with Microsoft VC is that when I compiled it on one computer, it
+         didn't seem to work on another.
+02-23-09 Created a new parameter type - piecewise polynomial functions.
+         Put these into the variable diffusion and variable lambda models.
+         Removed the nu=2 case from these models (it didn't help much anyway).
+
+02-22-09 Version 3.04 released.
+02-22-09 Added Microsoft VC project, and spherical.exe created from it.
+         Removed mingw32 cross compilation instructions from make-tar-zip.sh
+         (but the old version is in the directory "misc" if you want to use
+         it).
+02-17-09 Corrections to ode_rkf_45.
+02-16-09 Added printout of number of iterations when program finishes.
+02-16-09 Added do_manage_stiffness.  This is only available for Folgar-Tucker
+         diffusion or FT diffusion with RSC.  It tries to minimize the effect
+         of stiffness created by the Laplacian term.  It seems to give a 40%
+         speed improvement when using adaptive methods.
+         It could be made available for use with all methods except Koch or
+         ARD.
+02-15-09 Changed ode_rkf_45 so that error is computed using maximum of
+         spherical harmonic coefficients, rather than root mean square.
+
+02-09-09 Version 3.03 released.
+02-09-09 Added ode_rkf_45, an adaptive Runge-Kutta-Fehlberg 4,5 method.
+         (Algorithm essentially taken from Numerical Recipes in C.)
+02-07-09 Added make-skew.pl to the directory test-stuff.  This creates
+         parameter files in which the shear is randomly directed.
+02-06-09 In thread.h: "thread_type" -> "thread_return_t", "sem_type" -> "sem_t".
+02-05-09 Removed "index" macro, which is now redundant.
+
+02-04-09 Version 3.02 released.
+02-04-09 Made the code compatible with MS Visual Studio.  (A substantive
+         difference was to change the unix coding of threads; now it emulates
+         semaphores.)
+
+02-04-09 Version 3.01 released.
+02-03-09 Put derivs into it's own file.  Put condon-shortley in with it.
+02-03-09 gamm[3][3] becomes gamm[9].
+02-02-09 Put parameters, previously passed via global variables, into a single
+         struct, so that it is now explicitly passed to the subroutines that
+         need it.
+02-02-09 Implemented Condon-Shortley phase, and other "out of range" accesses
+         to phi, using padding of the data.
+         This seems to speed up the programs by a factor of 2.
+02-01-09 Rewrote so that it is C++ compatible.
+01-31-09 Rewrote so that it doesn't use complex.h.
+
+01-31-09 Started a complete rewrite.  The main purpose is to ultimately port
+         the program to "cuda" to take advantage of graphics programming unit.

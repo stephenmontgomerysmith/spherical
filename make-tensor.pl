@@ -7,7 +7,7 @@ use Expect::Simple;
 my $rank = $ARGV[0];
 die if $rank =~ /\D/ || $rank<=0; 
 
-my %attr = (Cmd => "env TENSOR=1 perl expand-method.pl",
+my %attr = (Cmd => "env TENSOR=1 OUTPUT_REAL=1 perl expand-method.pl",
   Prompt => '> ',
   DisconnectCmd => "q"
 );
@@ -29,7 +29,7 @@ sub comp {
 
 print "/* Created by \"perl $0 $ARGV[0]\". */\n";
 print "/* Returns 1/sqrt(4 pi) times moment tensor of rank $rank. */\n";
-print "void tensor${rank}(COMPLEX *psi, double a", "[3]" x $rank, ") {\n";
+print "void tensor${rank}(REAL *psi, REAL a", "[3]" x $rank, ") {\n";
 
 my @index;
 for (my $i=0;$i<$rank;$i++) {
@@ -41,14 +41,26 @@ while (1) {
   if (!defined($comp{$sort})) {
     my $response = comp($sort);
     foreach (split "\n", $response) {
-      my ($l,$m,$n) = split ";",$_;
+      my ($l,$m,$r,$i) = split ";",$_;
       next if $m<0;
-      $n = "($n)";
-      $n = "2*$n" if $m>0;
-      if (!defined($comp{$sort})) {
-        $comp{$sort} .= "    $n*psi[ind($l,$m)]";
-      } else {
-        $comp{$sort} .= "\n    + $n*psi[ind($l,$m)]";
+      if ($r != 0) {
+        $r = "($r)";
+        $r = "2*$r" if $m>0;
+        if (!defined($comp{$sort})) {
+          $comp{$sort} .= "    $r*psi[ind($l,$m,0)]";
+        } else {
+          $comp{$sort} .= "\n    + $r*psi[ind($l,$m,0)]";
+        }
+      }
+      if ($i != 0) {
+        $i = -$i;
+        $i = "($i)";
+        $i = "2*$i" if $m>0;
+        if (!defined($comp{$sort})) {
+          $comp{$sort} .= "    $i*psi[ind($l,$m,1)]";
+        } else {
+          $comp{$sort} .= "\n    + $i*psi[ind($l,$m,1)]";
+        }
       }
     }
     $comp{$sort} .= ";\n";

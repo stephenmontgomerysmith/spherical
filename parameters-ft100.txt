@@ -1,5 +1,3 @@
-h=0.001
-print_every=10
 nr_threads=2
 max_order=100
 tstart=0

@@ -38,16 +38,20 @@ The parameter file consists of a number of lines, each of the form
 The order in which they are written in the parameter file is unimportant.
 
 \begin{itemize}
-\item Step size of time is set by the parameter {\tt h}.  By default, the program uses the order two Adams-Bashforth multistep method.
-\item The parameter set as {\tt ode\_adams\_bash\_4=1} will cause the program will use the order four Adams-Bashforth multistep method.
-\item The parameter set as {\tt ode\_rk\_4=1} will cause the program will use the order four Runge-Kutta method.
-\item Data will be printed to the output file every {\tt print\_every} time steps.
 \item The number of threads used by the program is set by {\tt nr\_threads}.  This can be overridden by the environment variable {\tt NR\_THREADS} (using,for example, the {\tt SET} command in the windows command shell, or the {\tt export} or {\tt env} commands in the unix {\tt sh} or {\tt bash} shells.)
 \item The parameter {\tt max\_order} sets the order of spherical harmonics used.
 \item The start time and stop time are set by parameters {\tt tstart} and {\tt tend}.
 \item The rate of strain tensor is set by parameters {\tt gamma11}, {\tt gamma12}, {\tt gamma13}, {\tt gamma22}, {\tt gamma23}, {\tt gamma33}.
 \item The vorticity is set by parameters {\tt w1}, {\tt w2}, {\tt w3}.
 \item The initial state is $\psi = 1/4\pi$.  Later versions of the software may allow this to be different.
+\item By default the program will solve the differential equations using the order two-three Runge-Kutta-Fehlberg method.
+\item The parameter set as {\tt ode\_rkf\_45=1} will cause the program will use the order four-five Runge-Kutta-Fehlberg method.
+\item The parameter set as {\tt ode\_adams\_bash\_2=1} will cause the program will use the order two Adams-Bashforth multistep method.
+\item The parameter set as {\tt ode\_adams\_bash\_4=1} will cause the program will use the order four Adams-Bashforth multistep method.
+\item The parameter set as {\tt ode\_rk\_4=1} will cause the program will use the order four Runge-Kutta method.
+\item For fixed timestep methods (Runge-Kutta or Adams-Bashforth), the step size of time is set by the parameter {\tt h}.  For adaptive methods, this parameter sets the initial step size of time.  This defaults to $10^{-3}$ if not set.
+\item For the adaptive Runge-Kutta-Fehlberg methods, the parameter {\tt tol} sets the desired error, which is computed as the maximum of the absolute values of the spherical harmonic coefficients.  This defaults to $10^{-3}$ if it is not set.
+\item Data will be printed to the output file every {\tt print\_every} time steps.  This defaults to $1$ if it is not set.
 \end{itemize}
 
 \section*{Output}
@@ -64,6 +68,7 @@ This same information is output to the console if the command line option {\tt -
 $a_{1111}$ $a_{1112}$ $a_{1113}$ $a_{1122}$ $a_{1123}$ $a_{1133}$ $a_{1222}$ $a_{1223}$ $a_{1233}$ $a_{1333}$ $a_{2222}$ $a_{2223}$ $a_{2233}$ $a_{2333}$ $a_{3333}$
 \item The parameter set as {\tt print\_aijklmn=1} will add to the end of each line of output the values\\
 $a_{111111}$ $a_{111112}$ $a_{111113}$ $a_{111122}$ $a_{111123}$ $a_{111133}$ $a_{111222}$ $a_{111223}$ $a_{111233}$ $a_{111333}$ $a_{112222}$ $a_{112223}$ $a_{112233}$ $a_{112333}$ $a_{113333}$ $a_{122222}$ $a_{122223}$ $a_{122233}$ $a_{122333}$ $a_{123333}$ $a_{133333}$ $a_{222222}$ $a_{222223}$ $a_{222233}$ $a_{222333}$ $a_{223333}$ $a_{233333}$ $a_{333333}$
+\item The parameters {\tt print\_daij}, {\tt print\_daijkl}, and {\tt print\_daijklmn} set to 1 will print out the derivatives with respect to time of, respectively, the second, fourth, and sixth order moment tensors.
 \end{itemize}
 
 \section*{Folgar-Tucker model}
@@ -97,44 +102,21 @@ $$ E_r = C_3 \gamma^{-1} \Gamma: \mathcal A:\Gamma .$$
 \item The parameters {\tt C1}, {\tt C2} and {\tt C3} are the modified Koch parameters $C_1$, $C_2$ and $C_3$.
 \end{itemize}
 
-\section*{Directional diffusion models}
+\section*{Directional diffusion model}
 
 \noindent
-These give values for $D_r=D_r(\br)$ that depend upon $\br$, in the diffusion term of Jeffery's equation.  The first directional diffusion model is described in the Ph.D.\ thesis of David Jack \cite{jack}:
-$$ D_r = C_1 \gamma^{-1} \int_{\brho \in S^2} \bigl(|\brho\cdot(\br\times\dot{\tilde\brho})|^2 + |\brho\cdot(\br\times\dot{\tilde\br})|^2\bigr) \psi(\brho) \, d\brho +
-C_2 \gamma ,$$
+This gives values for $D_r=D_r(\br)$ that depend upon $\br$, in the diffusion term of Jeffery's equation.  The directional diffusion model is described in the Ph.D.\ thesis of David Jack \cite{jack}:
 and the second directional diffusion model is
-$$ D_r = C_1 \gamma^{-1} \int_{\brho \in S^2} |\brho\cdot(\br\times(\dot{\tilde\brho}-\dot{\tilde \br}))|^2 \psi(\brho) \, d\brho +
-C_2 \gamma .$$
+\begin{align*}
+D_r &= C_1 \gamma^{-1} \int_{\brho \in S^2} |\brho\cdot(\br\times(\dot{\tilde\brho}-\dot{\tilde \br}))|^2 \psi(\brho) \, d\brho +
+C_2 \gamma \\
+&= C_1 \gamma^{-1} \int_{\brho \in S^2} \bigl(|\brho\cdot(\br\times\dot{\tilde\brho})|^2 + |\brho\cdot(\br\times\dot{\tilde\br})|^2\bigr) \psi(\brho) \, d\brho +
+C_2 \gamma .
+\end{align*}
 \begin{itemize}
-\item The parameter set as {\tt do\_dd=1} will cause the first directional diffusion model to be used.
-\item The parameter set as {\tt do\_dd\_2=1} will cause the second directional diffusion model to be used.
+\item The parameter set as {\tt do\_dd=1} will cause the directional diffusion model to be used.
 \item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
 \item The parameters {\tt C1} and {\tt C2} are the directional diffusion parameters $C_1$ and $C_2$.
-\end{itemize}
-
-\section*{Variable diffusion models}
-
-\noindent
-Define $s_\nu$ for $\nu=1,2$:
-$$ s_1 = \left|\int_{S^2} \Gamma:\brho\brho \psi(\brho) \, d\brho\right|
-   = |A :\Gamma| ,$$
-$$ s_2 = \left(\int_{S^2} \left|\Gamma:\brho\brho\right|^2 \psi(\brho) \, d\brho\right)^{1/2} = \left(\Gamma: \mathbb A:\Gamma\right)^{1/2} . $$
-The variable diffusion model sets the diffusion term in Jeffery's equation to $D_r = C_1 s_\nu$.
-\begin{itemize}
-\item The parameter {\tt do\_vd} can take the values {\tt 1} or {\tt 2}, and will cause the variable diffusion model to be used with the appropriate value of $\nu$.
-\item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
-\item The parameter {\tt C1} is the parameter $C_1$.
-\end{itemize}
-
-\section*{Variable lambda models}
-
-\noindent
-The Jeffery's parameter is allowed to vary as $\lambda = \lambda_1 - \lambda_2 \gamma^{-1} s_\nu $.
-This can be used in conjunction with any of the diffusion models.
-\begin{itemize}
-\item The parameter {\tt do\_vl} can take the values {\tt 1} or {\tt 2}, and will cause the variable lambda model to be used with the appropriate value of $\nu$.
-\item The parameters {\tt lambda1} and {\tt lambda2} replace the parameter {\tt lambda}.
 \end{itemize}
 
 \section*{The RSC model of Wang, O'Gara and Tucker}
@@ -163,6 +145,22 @@ $$ D_r = b_1 \gamma I + b_2 \gamma A + b_3 \gamma A^2 + \tfrac12{b_4} \Gamma + \
 \item The parameter set as {\tt do\_ard=1} causes ARD to be used.
 \item The parameters {\tt b1}, {\tt b2}, {\tt b3}, {\tt b4} and {\tt b5} set $b_1$, $b_2$, $b_3$, $b_4$ and $b_5$.
 \end{itemize}
+
+\section*{Variable diffusion and variable lambda models}
+
+\noindent
+Define:
+$$ s = \gamma^{-1} \int_{S^2} \Gamma:\brho\brho \psi(\brho) \, d\brho = \gamma^{-1} A :\Gamma .$$
+Note that it can be shown that $|s| \le \sqrt2$.
+
+The variable diffusion model sets $D_r = \gamma f(s)$, and the variable lambda model sets $\lambda = g(s)$, for functions $f(s)$ and $g(s)$.
+\begin{itemize}
+\item The parameter set as {\tt do\_vd}=1 causes variable diffusion to occur.
+\item The parameter set as {\tt do\_vl}=1 causes variable lambda to occur.
+\item In the case {\tt do\_vd}=1, the function $f(s)$ is defined using the parameter {\tt vd\_fun}.
+\item In the case {\tt do\_vl}=1, the function $g(s)$ is defined using the parameter {\tt vl\_fun}.  In this case the parameter {\tt lambda} should NOT be set.
+\end{itemize}
+Functions are expressed using formulae involving `{\tt +}', `{\tt -}', `{\tt *}', `{\tt /}', `{\tt \verb|^|}' (exponentiation), `{\tt m}' (minimum), `{\tt M}' (maximum), parentheses `{\tt(}' and `{\tt)}', and the variable `{\tt s}'.  So, for example, `{\tt 1-5*(s M(-s)) M 0.2}' denotes $\max\{1-5|s|,0.2\}$.
 
 \section*{Acknowledgments}
 

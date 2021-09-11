@@ -1,6 +1,3 @@
-h=0.001
-print_every=10
-ode_adams_bash_4=1
 nr_threads=2
 max_order=400
 tstart=0

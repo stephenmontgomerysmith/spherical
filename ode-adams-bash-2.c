@@ -1,33 +1,40 @@
 #include "spherical.h"
 
-static COMPLEX *diffx;
-static COMPLEX *olddiffx;
-static COMPLEX *tempx;
+static REAL *diffx;
+static REAL *olddiffx;
+static REAL *tempx;
 static int first = 1;
 
-extern int max_order;
-
-void ode_adams_bash_2_solve(double *t, COMPLEX *x, double h,
-                            void derivs(double t, COMPLEX *x, COMPLEX *diffx)) {
+void ode_adams_bash_2_solve(REAL *t, REAL *x, REAL h,
+                            void derivs(REAL t, REAL *x, REAL *diffx, param_list_t *param),
+                            param_list_t *param) {
   int i;
 
   if (first) {
     first = 0;
-    diffx = malloc(sizeof(COMPLEX)*length);
-    tempx = malloc(sizeof(COMPLEX)*length);
-    olddiffx = malloc(sizeof(COMPLEX)*length);
+    diffx = (REAL*)malloc(sizeof(REAL)*param->length);
+    tempx = (REAL*)malloc(sizeof(REAL)*param->length);
+    olddiffx = (REAL*)malloc(sizeof(REAL)*param->length);
 /* Midpoint method */
-    derivs(*t,x,diffx);
-    memcpy(olddiffx,diffx,length*sizeof(COMPLEX));
-    for (i=0;i<length;i++) tempx[i] = x[i] + h*diffx[i]/2;
-    derivs(*t+h/2,tempx,diffx);
-    for (i=0;i<length;i++) x[i] += h*diffx[i];
+    derivs(*t,x,diffx,param);
+    memcpy(olddiffx,diffx,param->length*sizeof(REAL));
+    for (i=0;i<param->length;i++) tempx[i] = x[i] + h*diffx[i]/2;
+    derivs(*t+h/2,tempx,diffx,param);
+    for (i=0;i<param->length;i++) x[i] += h*diffx[i];
   } else {
 /* Adams-Bashforth method of order 2 */
-    derivs(*t,x,diffx);
-    for (i=0;i<length;i++)
+    derivs(*t,x,diffx,param);
+    for (i=0;i<param->length;i++)
       x[i] = x[i] + h/2 * (3*diffx[i] - olddiffx[i]);
-    memcpy(olddiffx,diffx,length*sizeof(COMPLEX));
+/* The following code, as a replacement for the above two lines, didn't
+   seem to speed it up any.
+    int l,m,c;
+    for (l=0;l<=param->max_order;l+=2)
+      for (m=0;m<=l;m++)
+        for (c=0;c<=1;c++)
+          x[ind(l,m,c)] = x[ind(l,m,c)] + h/2 * (3*diffx[ind(l,m,c)] - olddiffx[ind(l,m,c)]);
+*/
+    memcpy(olddiffx,diffx,param->length*sizeof(REAL));
   }
   *t += h;
 }

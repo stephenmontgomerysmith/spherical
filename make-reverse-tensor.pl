@@ -35,14 +35,21 @@ for (my $i=0;$i<$rank;$i++) {
   $index[$i] = 0;
 }
 while (1) {
-  my $equ = "a".join('',@index).($use_maxima?"=":"==");
+  my $equ_r = "a".join('',@index).($use_maxima?"=":"==");
+  my $equ_i = "0".($use_maxima?"=":"==");
   my $response = comp(join('',@index));
   foreach (split "\n", $response) {
     my ($l,$m,$r,$i) = split ";",$_;
     $m = "m".(-$m) if $m<0;
-    $equ .= "+(($r)+I*($i))*psil${l}m$m"
+    if ($m eq 0) {
+      $equ_r .= "+($r)*psil${l}m${m}r";
+      $equ_i .= "+($i)*psil${l}m${m}r";
+    } else {
+      $equ_r .= "+($r)*psil${l}m${m}r-($i)*psil${l}m${m}i";
+      $equ_i .= "+($i)*psil${l}m${m}r+($r)*psil${l}m${m}i";
+    }
   }
-  @equ = (@equ,$equ);
+  @equ = (@equ,$equ_r,$equ_i);
   my $i = $rank-1;
   while ($i>=0 && $index[$i]==2) {
     $i--;
@@ -86,10 +93,9 @@ if ($use_maxima) {
   $return =~ s/\r//g;
 }
 
-
 print "/* Created by \"perl $0 $ARGV[0]\". */\n";
 print "/* Adds to psi sqrt(4 pi) times moment tensor of rank $rank. */\n";
-print "void reverse_tensor${rank}(double a", "[3]" x $rank,", COMPLEX *psi) {\n";
+print "void reverse_tensor${rank}(REAL a", "[3]" x $rank,", REAL *psi) {\n";
 
 my @psi_equ;
 
@@ -98,7 +104,8 @@ if ($use_maxima) {
     my $lhs = $1;
     my $rhs = $2;
     next if $lhs =~ /mm/;
-    $lhs =~ s/l(\d+)m(\d+)/\[ind\($1\,$2\)\]/ || die;
+    $lhs =~ s/l(\d+)m(\d+)r/\[ind\($1\,$2\,0\)\]/ || die;
+    $lhs =~ s/l(\d+)m(\d+)i/\[ind\($1\,$2\,1\)\]/ || die;
     $rhs =~ s/([\+\-])/\n                   $1/g;
     $rhs =~ s/\s+$//;
     $rhs =~ s/^\s+//;
@@ -110,7 +117,8 @@ if ($use_maxima) {
     my $lhs = $1;
     my $rhs = $2;
     next if $lhs =~ /mm/;
-    $lhs =~ s/l(\d+)m(\d+)/\[ind\($1\,$2\)\]/ || die;
+    $lhs =~ s/l(\d+)m(\d+)r/\[ind\($1\,$2\,0\)\]/ ||
+    $lhs =~ s/l(\d+)m(\d+)i/\[ind\($1\,$2\,1\)\]/ || die;
     $rhs =~ s/(a\d+)/$1\n                   /g;
     $rhs =~ s/\s+$//;
     while ($rhs =~ s/(a\d*)(\d)/$1\[$2\]/) {}

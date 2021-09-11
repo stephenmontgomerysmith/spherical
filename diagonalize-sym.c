@@ -1,5 +1,4 @@
-#include <math.h>
-#include <string.h>
+#include "spherical.h"
 
 /* 
  * Find the eigenvalues of a symmetric matrix A using Jacobi Method.  The
@@ -25,30 +24,30 @@
  *    programs.
  */
 
-void diagonalize_sym(int n, double A[n][n], double eval[n], double evec[n][n]) {
+void diagonalize_sym(int n, REAL *A, REAL *eval, REAL *evec) {
   int i, j, k, done;
-  double discr, aii, aij, ajj, aik, ajk, v1, v2, norm;
+  REAL discr, aii, aij, ajj, aik, ajk, v1, v2, norm;
 
   for (i=0;i<n;i++) for (j=0;j<n;j++)
-    evec[i][j] = (i==j)?1:0;
+    evec[i*n+j] = (i==j)?1:0;
   do {
     done = 1;
     for (i=0;i<n;i++) for (j=0;j<i;j++) {
 /* Diagonalize the diagonal 2 by 2 sub-matrix along the ith and jth axes. */
-      aii = A[i][i];
-      aij = A[i][j];
-      ajj = A[j][j];
+      aii = A[i*n+i];
+      aij = A[i*n+j];
+      ajj = A[j*n+j];
       if (fabs(aij)>1e-100) {
         discr = hypot(aii-ajj,2*aij);
 /* Compute eigenvalues of 2 by 2 sub-matrix. */
         if (aii+ajj>0) {
-          A[i][i] = (aii+ajj+discr)/2;
-          A[j][j] = (aii*ajj-aij*aij)/A[i][i];
+          A[i*n+i] = (aii+ajj+discr)/2;
+          A[j*n+j] = (aii*ajj-aij*aij)/A[i*n+i];
         } else {
-          A[j][j] = (aii+ajj-discr)/2;
-          A[i][i] = (aii*ajj-aij*aij)/A[j][j];
+          A[j*n+j] = (aii+ajj-discr)/2;
+          A[i*n+i] = (aii*ajj-aij*aij)/A[j*n+j];
         }
-        A[i][j] = A[j][i] = 0;
+        A[i*n+j] = A[j*n+i] = 0;
 /* Compute normalized eigenvector corresponding to first eigenvalue. */
         if (aii>ajj) {
           v1 = (aii-ajj+discr)/2;
@@ -62,24 +61,24 @@ void diagonalize_sym(int n, double A[n][n], double eval[n], double evec[n][n]) {
         v2 /= norm;
 /* Apply change of basis to the rest of the matrix. */
         for (k=0;k<n;k++) if (k!=i && k!=j) {
-          aik = A[i][k];
-          ajk = A[j][k];
-          A[i][k] = A[k][i] = v1*aik+v2*ajk;
-          A[j][k] = A[k][j] = -v2*aik+v1*ajk;
+          aik = A[i*n+k];
+          ajk = A[j*n+k];
+          A[i*n+k] = A[k*n+i] = v1*aik+v2*ajk;
+          A[j*n+k] = A[k*n+j] = -v2*aik+v1*ajk;
         }
 /* Apply change of basis to evec. */
         for (k=0;k<n;k++) {
-          aik = evec[i][k];
-          ajk = evec[j][k];
-          evec[i][k] = v1*aik+v2*ajk;
-          evec[j][k] = -v2*aik+v1*ajk;
+          aik = evec[i*n+k];
+          ajk = evec[j*n+k];
+          evec[i*n+k] = v1*aik+v2*ajk;
+          evec[j*n+k] = -v2*aik+v1*ajk;
         }
         done = 0;
       }
     }
   } while (!done);
   for (i=0;i<n;i++)
-    eval[i] = A[i][i];
+    eval[i] = A[i*n+i];
 }
 
 /* If you want to test it:
@@ -87,10 +86,10 @@ void diagonalize_sym(int n, double A[n][n], double eval[n], double evec[n][n]) {
 #include <stdio.h>
 
 main () {
-  double A[3][3] = {{2,3,4},{3,4,5},{4,5,6}};
-  double evec[3][3];
+  REAL A[9] = {2,3,4,3,4,5,4,5,6}};
+  REAL evec[9];
   int i,j,k;
-  double s;
+  REAL s;
 
   diagonalize_sym(3,A,eval,evec);
 
@@ -98,7 +97,7 @@ main () {
     for (k=0;k<3;k++) {
       s = 0;
       for (i=0;i<3;i++)
-        s += eval[i]*evec[i][j]*evec[i][k];
+        s += eval[i]*evec[i*3+j]*evec[i*3+k];
       printf("%g ",s);
     }
     printf("\n");

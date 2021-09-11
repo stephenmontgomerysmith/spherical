@@ -7,6 +7,7 @@ use strict;
 use Expect::Simple;
 
 my $use_maxima = defined($ENV{"USE_MAXIMA"}) && $ENV{"USE_MAXIMA"};
+my $output_real = defined($ENV{"OUTPUT_REAL"}) && $ENV{"OUTPUT_REAL"};
 my $tensor;
 
 # Start up Mathematica or Maxima.
@@ -292,7 +293,11 @@ while (my $line=<>) {
         if (($r ne '0' && $r ne '0.' && $r ne '0.0') || ($i ne '0' && $i ne '0.' && $i ne '0.0')) {
           print "\n" if !$first;
           $first = 0;
-          print "$l;$m;($r)+($i)*I";
+          if ($output_real) {
+            print "$l;$m;$r;$i";
+          } else {
+            print "$l;$m;($r)+($i)*I";
+          }
         }
       }
     }

@@ -1,5 +1,3 @@
-h=0.001
-print_every=10
 nr_threads=2
 max_order=50
 tstart=0
@@ -15,4 +13,4 @@ gamma22=0
 gamma23=0
 gamma33=0
 do_vd=1
-C1=0.05
+vd_fun=0.05*s

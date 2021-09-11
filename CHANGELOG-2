@@ -1,5 +1,5 @@
 01-31-09 Version 2.26 released.
-01-31-09 param_bool and param_int eroniously returned double.  Changed to int.
+01-31-09 param_bool and param_int erroneously returned double.  Changed to int.
 
 01-19-09 Version 2.25 released.
 01-19-09 Changed expand-thread.pl so that lstart and lend are set when
@@ -155,7 +155,7 @@
          COMPLEX.  These errors were found through experiences in creating
          psidot-al.
 11-13-08 Corrected huge mistake in psidot-dd and psidot-dd-2.  They had
-         computed the laplacian and multiplied by Dr in the wrong order.
+         computed the Laplacian and multiplied by Dr in the wrong order.
          This was correcting the correction of 10-24-08 (that is, it was 
          correct before 10-24-08).
 11-12-08 Rewrote expand-iterate.pl and expand-thread.pl so that it could
