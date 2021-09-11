@@ -1,0 +1,66 @@
+#define NO_STDIO
+#include "spherical.h"
+
+#define block_width 8
+#define promote_to_float2(x) (*((float2*)(&(x))))
+
+static REAL *diffx;
+static REAL *olddiffx;
+static REAL *tempx;
+static int first = 1;
+
+/* x_vec = a_vec + b*c+vec */
+__global__ void madd(REAL *x_vec, REAL *a_vec, REAL b, REAL *c_vec, param_list_t *param) {
+  int l = 2*(blockIdx.y*blockDim.y + threadIdx.y);
+  int m = blockIdx.x*blockDim.x + threadIdx.x;
+  float2 a = promote_to_float2(a_vec[ind(l,m,0)]);
+  float2 c = promote_to_float2(c_vec[ind(l,m,0)]);
+  float2 x;
+  if (l<=param->max_order && m<=l) {
+    x.x = a.x + b*c.x;
+    x.y = a.y + b*c.y;
+  }
+  promote_to_float2(x_vec[ind(l,m,0)]) = x;
+  __syncthreads();
+}
+
+/* x_vec += b*c+vec */
+__global__ void maddto(REAL *x_vec, REAL b, REAL *c_vec, param_list_t *param) {
+  int l = 2*(blockIdx.y*blockDim.y + threadIdx.y);
+  int m = blockIdx.x*blockDim.x + threadIdx.x;
+  float2 c = promote_to_float2(c_vec[ind(l,m,0)]);
+  float2 x = promote_to_float2(x_vec[ind(l,m,0)]);
+    x.x += b*c.x;
+    x.y += b*c.y;
+  promote_to_float2(x_vec[ind(l,m,0)]) = x;
+  __syncthreads();
+}
+
+void ode_adams_bash_2_solve(REAL *t, REAL *x, REAL h,
+                            void derivs(REAL t, REAL *x, REAL *diffx, param_list_t *param, param_list_t *param_d),
+                            param_list_t *param, param_list_t *param_d) {
+  dim3 dimblock(block_width,block_width);
+  dim3 dimgrid(param->data_width/block_width,param->data_width/block_width/2);
+  REAL *tp;
+
+  if (first) {
+    first = 0;
+    cudaMalloc((void**)&diffx,sizeof(REAL)*param->length);
+    cudaMalloc((void**)&tempx,sizeof(REAL)*param->length);
+    cudaMalloc((void**)&olddiffx,sizeof(REAL)*param->length);
+/* Midpoint method */
+    derivs(*t,x,diffx,param,param_d);
+    cudaMemcpy(olddiffx,diffx,param->length*sizeof(REAL),cudaMemcpyDeviceToDevice);
+    madd<<<dimgrid,dimblock>>>(tempx,x,h/2,diffx, param_d);
+    derivs(*t+h/2,tempx,diffx,param,param_d);
+    maddto<<<dimgrid,dimblock>>>(x,h,diffx, param_d);
+  } else {
+/* Adams-Bashforth method of order 2 */
+    derivs(*t,x,diffx,param,param_d);
+    maddto<<<dimgrid,dimblock>>>(x,3*h/2,diffx, param_d);
+    maddto<<<dimgrid,dimblock>>>(x,-h/2,olddiffx, param_d);
+    tp = olddiffx; olddiffx = diffx; diffx = tp;
+//    cudaMemcpy(olddiffx,diffx,param->length*sizeof(REAL),cudaMemcpyDeviceToDevice);
+  }
+  *t += h;
+}

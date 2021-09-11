@@ -1,11 +1,22 @@
-CFLAGS=-W -Wall -O3 -ffast-math -march=native
+CFLAGS=-W -Wall -O3 -ffast-math -march=native -I/usr/local/cuda/include
+CC=c++
+NVCC=nvcc -O3 #-deviceemu
 
 all: spherical
 
-OBJECT= spherical.o ode-adams-bash-2.o ode-adams-bash-4.o ode-rk-4.o tensor.o get-param.o psidot.o psidot-koch.o psidot-dd.o psidot-dd-2.o psidot-vd.o psidot-vl.o reverse-tensor.o diagonalize-sym.o rsc.o psidot-ard.o
+OBJECT= spherical.o ode-adams-bash-2.o tensor.o get-param.o psidot.o
+
+psidot.o: psidot.cu
+	${NVCC} -c psidot.cu
+
+ode-adams-bash-2.o: ode-adams-bash-2.cu
+	${NVCC} -c ode-adams-bash-2.cu
+
+derivs.o: derivs.cu
+	${NVCC} -c derivs.cu
 
 spherical: ${OBJECT}
-	${CC} ${CFLAGS} ${OBJECT} -o spherical -lm -pthread
+	${CC} ${CFLAGS} ${OBJECT} -o spherical -lm -L/usr/local/cuda/lib -lcudart
 
 src:
 	perl expand-iterate.pl psidot.conf > psidot-unthreaded.c
@@ -50,7 +61,7 @@ src-maxima:
 	env USE_MAXIMA=1 make src
 
 clean:
-	rm -f spherical *.o *~ *.aux *.dvi *.log *core s.out s-out.eps misc/*.aux misc/*.dvi misc/*.log lapack/*.o *.bak
+	rm -f spherical *.o *~ *.aux *.dvi *.log *core s.out s-out.eps misc/*.aux misc/*.dvi misc/*.log lapack/*.o *.bak *.linkinfo
 
 cleansrc:
 	rm -f reverse-tensor.c tensor.c psidot.c psidot-*.c *-unthreaded.c

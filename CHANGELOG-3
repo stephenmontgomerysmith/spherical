@@ -1,0 +1,11 @@
+02-02-09 Put parameters, previously passed via global variables, into a single
+         struct, so that it is now explicitly passed to the subroutines that
+         need it.
+02-02-09 Implemented Condon-Shortley phase, and other "out of range" accesses
+         to phi, using padding of the data.
+         This seems to speed up the programs by a factor of 2.
+02-01-09 Rewrote so that it is C++ compatible.
+01-31-09 Rewrote so that it doesn't use complex.h.
+
+01-31-09 Started a complete rewrite.  The main purpose is to ultimately port
+         the program to "cuda" to take advantage of graphics programming unit.

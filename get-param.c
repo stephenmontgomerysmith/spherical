@@ -8,7 +8,7 @@ static struct param_s {
   struct param_s *next;
 } *param = NULL;
 
-void set_param_filename(char *filename) {
+void set_param_filename(const char *filename) {
   FILE *par_file;
   char s[1024];
   struct param_s *current=NULL;
@@ -20,13 +20,13 @@ void set_param_filename(char *filename) {
   while (fgets(s,sizeof(s)-1,par_file)!=NULL) {
     if (s[0] != '#') {
       if (current==NULL) {
-        param = malloc(sizeof(struct param_s));
+        param = (struct param_s *)malloc(sizeof(struct param_s));
         current = param;
       } else {
-        current->next = malloc(sizeof(struct param_s));
+        current->next = (struct param_s *)malloc(sizeof(struct param_s));
         current = current->next;
       }
-      current->line = malloc(strlen(s)+1);
+      current->line = (char *)malloc(strlen(s)+1);
       strcpy(current->line,s);
       current->used = 0;
       current->next = NULL;
@@ -54,7 +54,7 @@ void done_with_param() {
   if (error) exit(1);
 }
 
-static char *get_line(char *p, int die_if_none) {
+static char *get_line(const char *p, int die_if_none) {
   struct param_s *current=param;
   while (current!=NULL) {
     if (strncmp(p,current->line,strlen(p))==0 && (current->line)[strlen(p)]=='=') {
@@ -70,28 +70,28 @@ static char *get_line(char *p, int die_if_none) {
     return zero;
 }
 
-int param_bool(char *p) {
+int param_bool(const char *p) {
   int r;
   r = strtol(get_line(p,0),NULL,10);
   if (verbose && r) printf("%s=%d\n",p,r);
   return r;
 }
 
-int param_int(char *p) {
+int param_int(const char *p) {
   int r;
   r = strtol(get_line(p,1),NULL,10);
   if (verbose) printf("%s=%d\n",p,r);
   return r;
 }
 
-double param_double(char *p) {
-  double r;
+REAL param_REAL(const char *p) {
+  REAL r;
   r = strtod(get_line(p,1),NULL);
   if (verbose) printf("%s=%g\n",p,r);
   return r;
 }
 
-int param_choice(char *p, ...) {
+int param_choice(const char *p, ...) {
   va_list args;
   char *s,*t;
   int r;
@@ -110,7 +110,7 @@ int param_choice(char *p, ...) {
   exit(1);
 }
 
-void param_ignore(char *p) {
+void param_ignore(const char *p) {
   char *s;
   s = get_line(p,0);
 }

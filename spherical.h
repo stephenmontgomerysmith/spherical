@@ -1,60 +1,89 @@
-#include <complex.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef NO_STDIO
 #include <stdio.h>
+#endif
 #include <stdarg.h>
 #include <ctype.h>
+#include <cuda_runtime_api.h>
 
-#ifdef USE_COMPLEX_DOUBLE
-#define COMPLEX complex double
-#else
-#define COMPLEX complex
+#define REAL float
+
+#ifndef PADDING
+#define PADDING 4
 #endif
 
 /*
- * psi[ind(l,m)] represents the Y_l^m spherical harmonic coefficient of psi.
+ * psi[ind(l,m,c)] for (c=0,1) represent the real and imaginary components of
+ * the Y_l^m spherical harmonic coefficient of psi.
  */
-#define ind(l,m) ((l)*(l)/4+(m))
+#define ind_macro(l,m,c,w) \
+  ((((l)+8)/2*(w+2*8)+(m)+8)*2+c)
+#define ind(l,m,c) ind_macro(l,m,c,param->data_width)
 
-/* 
- * Y_l^(-m) = (-1)^m conj(Y_l^m)
- */
-#define index(v,l,m) (                      \
-  ((l)>max_order) ? 0 :                     \
-  (abs(m)>(l))    ? 0 :                     \
-  ((m)>=0)        ? v[ind(l,m)] :           \
-  ((m)%2)         ? -conj(v[ind(l,-(m))]) : \
-                    conj(v[ind(l,-(m))]) )
+typedef struct {
+  REAL h;
+  int print_every;
+  int nr_threads;
+  int max_order;
+  int data_width;
+  REAL tstart;
+  REAL tend;
+  REAL lambda;
+  REAL w[3];
+  REAL gamm[9];
+  int ode_adams_bash_4;
+  int ode_rk_4;
+  int do_koch;
+  int do_dd;
+  int do_dd_2;
+  int do_vd;
+  int do_ard;
+  REAL CI;
+  REAL C1;
+  REAL C2;
+  REAL C3;
+  REAL b1, b2, b3, b4, b5;
+  int do_vl;
+  REAL lambda1;
+  REAL lambda2;
+  int do_rsc;
+  REAL kappa;
+  int print_aij, print_aijkl, print_aijklmn;
+  REAL Dr;
+  REAL normgamma;
+  int length;
+} param_list_t;
 
-#define length ind(max_order+2,0)
-
-void ode_adams_bash_2_solve(double *t, COMPLEX *x, double h,
-                            void derivs(double t, COMPLEX *x, COMPLEX *diffx));
-void ode_adams_bash_4_solve(double *t, COMPLEX *x, double h,
-                            void derivs(double t, COMPLEX *x, COMPLEX *diffx));
-void ode_rk_4_solve(double *t, COMPLEX *x, double h,
-                    void derivs(double t, COMPLEX *x, COMPLEX *diffx));
-void compute_psidot(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_koch(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_dd(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_dd_2(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_vd(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_vl(COMPLEX* psidot, COMPLEX* psi);
-void compute_psidot_ard(COMPLEX* psidot, COMPLEX* psi);
-void tensor2(COMPLEX *psi, double a[3][3]);
-void tensor4(COMPLEX *psi, double a[3][3][3][3]);
-void tensor6(COMPLEX *psi, double a[3][3][3][3][3][3]);
-void compute_psidot_rsc(COMPLEX* psidot, COMPLEX* psi);
-void reverse_tensor2(double a[3][3], COMPLEX *psi);
-void reverse_tensor4(double a[3][3][3][3], COMPLEX *psi);
-void reverse_tensor6(double a[3][3][3][3][3][3], COMPLEX *psi);
-void diagonalize_sym(int n, double A[n][n], double eval[n], double evec[n][n]);
-int param_bool(char *p);
-int param_int(char *p);
-double param_double(char *p);
-int param_choice(char *p, ...);
-void set_param_filename(char *f);
+void ode_adams_bash_2_solve(REAL *t, REAL *x, REAL h, int do_many,
+                            param_list_t *param,param_list_t *param_d);
+void ode_adams_bash_4_solve(REAL *t, REAL *x, REAL h,
+                            void derivs(REAL t, REAL *x, REAL *diffx, param_list_t *param,param_list_t *param_d),
+                            param_list_t *param);
+void ode_rk_4_solve(REAL *t, REAL *x, REAL h,
+                    void derivs(REAL t, REAL *x, REAL *diffx, param_list_t *param,param_list_t *param_d),
+                    param_list_t *param);
+void compute_psidot(REAL* psidot, REAL* psi, param_list_t *param,param_list_t *param_d, int do_adams_bash_2, int nr_times);
+void compute_psidot_koch(REAL* psidot, REAL* psi, param_list_t *param);
+void compute_psidot_dd(REAL* psidot, REAL* psi, param_list_t *param);
+void compute_psidot_dd_2(REAL* psidot, REAL* psi, param_list_t *param);
+void compute_psidot_vd(REAL* psidot, REAL* psi, param_list_t *param);
+void compute_psidot_vl(REAL* psidot, REAL* psi, param_list_t *param);
+void compute_psidot_ard(REAL* psidot, REAL* psi, param_list_t *param);
+void tensor2(REAL *psi, REAL a[3][3], param_list_t *param);
+void tensor4(REAL *psi, REAL a[3][3][3][3], param_list_t *param);
+void tensor6(REAL *psi, REAL a[3][3][3][3][3][3], param_list_t *param);
+void compute_psidot_rsc(REAL* psidot, REAL* psi, param_list_t *param);
+void reverse_tensor2(REAL a[3][3], REAL *psi);
+void reverse_tensor4(REAL a[3][3][3][3], REAL *psi);
+void reverse_tensor6(REAL a[3][3][3][3][3][3], REAL *psi);
+void diagonalize_sym(int n, REAL *A, REAL *eval, REAL *evec);
+int param_bool(const char *p);
+int param_int(const char *p);
+REAL param_REAL(const char *p);
+int param_choice(const char *p, ...);
+void set_param_filename(const char *f);
 void set_param_verbose_level(int v);
 void done_with_param();
-void param_ignore(char *p);
+void param_ignore(const char *p);
