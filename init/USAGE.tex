@@ -1,0 +1,190 @@
+\documentclass{amsart}
+
+\newcommand{\br}{{\mathbf r}}
+\newcommand{\e}{{\mathbf e}}
+\newcommand{\brho}{{\boldsymbol \rho}}
+\newcommand{\bnabla}{{\boldsymbol \nabla}}
+
+\title{Using the Spherical Software}
+
+\begin{document}
+
+\maketitle
+
+\noindent
+The {\tt spherical} software is invoked by the command
+\begin{center}
+{\tt spherical -p parameter-file.txt}
+\end{center}
+where {\tt parameter-file.txt} is a text file that sets various parameters, described below.  The command can be invoked with two other command line options, for example:
+\begin{center}
+{\tt spherical -p parameter-file.txt -o output-file -v10}
+\end{center}
+where {\tt output-file} is the output file, which will default to {\tt s.out} if not specified, and {\tt -v} denotes verbose output, and if followed by a number $n$, will write out to the console every $n$th time it writes data to the output file.
+
+The program {\tt spherical} uses spherical harmonics to solve Jeffery's equation \cite{jeffery} for $\psi=\psi(\br)$:
+$$ \frac\partial{\partial t}\psi = \bnabla\cdot\bigl(-\dot\br \psi + \bnabla(D_r \psi)\bigr) ,$$
+where
+$$ \dot\br = \tfrac12(\mathbf w \times\br) + \lambda \dot{\tilde\br} ,\quad \dot{\tilde\br} = \tfrac12(\Gamma \cdot\br - \Gamma:\br\br\br) , $$
+where $\Gamma$ is the rate of strain tensor, and $\mathbf w$ is the vorticity.  Note that $\bnabla$ here denotes the gradient projected tangentially to the sphere, namely $\bnabla f = (I-\br\br)\cdot(\tfrac{\partial f}{\partial x},\tfrac{\partial f}{\partial y},\tfrac{\partial f}{\partial z})$.
+
+\section*{Basic Parameters}
+
+\noindent
+The parameter file consists of a number of lines, each of the form
+\begin{center}
+{\tt parameter=value}
+\end{center}
+The order in which they are written in the parameter file is unimportant.
+
+\begin{itemize}
+\item Step size of time is set by the parameter {\tt h}.  By default, the program uses the order two Adams-Bashforth multistep method.
+\item The parameter set as {\tt ode\_adams\_bash\_4=1} will cause the program will use the order four Adams-Bashforth multistep method.
+\item The parameter set as {\tt ode\_rk\_4=1} will cause the program will use the order four Runge-Kutta method.
+\item Data will be printed to the output file every {\tt print\_every} time steps.
+\item The number of threads used by the program is set by {\tt nr\_threads}.  This can be overridden by the environment variable {\tt NR\_THREADS} (using,for example, the {\tt SET} command in the windows command shell, or the {\tt export} or {\tt env} commands in the unix {\tt sh} or {\tt bash} shells.)
+\item The parameter {\tt max\_order} sets the order of spherical harmonics used.
+\item The start time and stop time are set by parameters {\tt tstart} and {\tt tend}.
+\item The rate of strain tensor is set by parameters {\tt gamma11}, {\tt gamma12}, {\tt gamma13}, {\tt gamma22}, {\tt gamma23}, {\tt gamma33}.
+\item The vorticity is set by parameters {\tt w1}, {\tt w2}, {\tt w3}.
+\item By default, the initial state is $\psi = 1/4\pi$.  The parameter set as {\tt enter\_aij\_init=1} will cause the initial state to be quadratic with second order moments defined by parameters {\tt a11\_init}, {\tt a12\_init}, {\tt a13\_init}, {\tt a22\_init}, {\tt a23\_init}, {\tt a33\_init}.  (Note that if any of the eigenvalues of the initial state matrix are less than $1/5$, then $\psi$ will be negative on parts of the sphere, and as such $\psi$ will not represent a probability distribution.)
+\end{itemize}
+
+\section*{Output}
+
+\noindent
+The program, by default, will write to the output file a series of lines containing
+\begin{center}$t$ $a_{11}$ $a_{22}$ $a_{33}$ $a_{12}$\end{center}
+This same information is output to the console if the command line option {\tt -v} with a number is specified.  Here $a_{ij}$ are the coefficients of the second moments tensor.  Similarly $a_{ijkl}$ are the coefficients of the fourth moments tensor, and $a_{ijklmn}$ are the coefficients of the sixth moments tensor.
+\begin{itemize}
+\item The parameter set as {\tt print\_aij=1} will cause the lines written to the output file to change to
+\begin{center}$t$ $a_{11}$ $a_{12}$ $a_{13}$ $a_{22}$ $a_{23}$ $a_{33}$\end{center}
+(but the output to the console will remain as before).
+\item The parameter set as {\tt print\_aijkl=1} will add to the end of each line of output the values\\
+$a_{1111}$ $a_{1112}$ $a_{1113}$ $a_{1122}$ $a_{1123}$ $a_{1133}$ $a_{1222}$ $a_{1223}$ $a_{1233}$ $a_{1333}$ $a_{2222}$ $a_{2223}$ $a_{2233}$ $a_{2333}$ $a_{3333}$
+\item The parameter set as {\tt print\_aijklmn=1} will add to the end of each line of output the values\\
+$a_{111111}$ $a_{111112}$ $a_{111113}$ $a_{111122}$ $a_{111123}$ $a_{111133}$ $a_{111222}$ $a_{111223}$ $a_{111233}$ $a_{111333}$ $a_{112222}$ $a_{112223}$ $a_{112233}$ $a_{112333}$ $a_{113333}$ $a_{122222}$ $a_{122223}$ $a_{122233}$ $a_{122333}$ $a_{123333}$ $a_{133333}$ $a_{222222}$ $a_{222223}$ $a_{222233}$ $a_{222333}$ $a_{223333}$ $a_{233333}$ $a_{333333}$
+\end{itemize}
+
+\section*{Folgar-Tucker model}
+
+\noindent
+The program will default to solving Jeffery's equation with the Folgar-Tucker diffusion term \cite{folgar}.  This sets the diffusion term to $ D_r = C_I \gamma $.
+Here, and elsewhere, $\gamma = \left(\frac12\Gamma:\Gamma\right)^{1/2}$.
+\begin{itemize}
+\item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
+\item The parameter {\tt CI} sets the parameter $C_I$.
+\end{itemize}
+
+\section*{Modified Koch model}
+
+\noindent
+This provides an anisotropic diffusion model:
+\begin{align*}
+\frac\partial{\partial t}\psi &= - \bnabla\cdot(\dot\br \psi) + \bnabla\cdot(I-\br\br)\cdot D_r\cdot\bnabla\psi \\
+&\qquad - \mathbf L\cdot(I-\br\br)\cdot E_r\cdot\mathbf L \psi \\
+& = - \bnabla\cdot(\dot\br \psi) + (\bnabla-2\br)\cdot D_r\cdot\bnabla\psi - \mathbf L \cdot E_r \cdot \mathbf L \psi .
+\end{align*}
+Here $(I-\br\br)$ is the matrix of the projection onto the tangent space of the sphere, and $\mathbf L = -i \br \times \bnabla$ is the so called angular momentum operator.  (Note that the Laplacian operator can be expressed two different ways as $\bnabla\cdot\bnabla = -\mathbf L \cdot \mathbf L$.)
+
+Koch \cite{koch} defines $D_r$ as the matrix
+$$ D_r = C_1 \gamma^{-1} (\Gamma: \mathbb A:\Gamma) I + C_2 \gamma^{-1} \Gamma: \mathcal A:\Gamma .$$
+Here $A$, $\mathbb A$, and $\mathcal A$ are the tensors of $2$nd, $4$th and $6$th moments, respectively, of $\psi$.  This software has an additional modification in the form of $E_r$:
+$$ E_r = C_3 \gamma^{-1} \Gamma: \mathcal A:\Gamma .$$
+\begin{itemize}
+\item The parameter set as {\tt do\_koch=1} will cause the modified Koch diffusion model to be used.
+\item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
+\item The parameters {\tt C1}, {\tt C2} and {\tt C3} are the modified Koch parameters $C_1$, $C_2$ and $C_3$.
+\end{itemize}
+
+\section*{Directional diffusion models}
+
+\noindent
+These give values for $D_r=D_r(\br)$ that depend upon $\br$, in the diffusion term of Jeffery's equation.  The first directional diffusion model is described in the Ph.D.\ thesis of David Jack \cite{jack}:
+$$ D_r = C_1 \gamma^{-1} \int_{\brho \in S^2} \bigl(|\brho\cdot(\br\times\dot{\tilde\brho})|^2 + |\brho\cdot(\br\times\dot{\tilde\br})|^2\bigr) \psi(\brho) \, d\brho +
+C_2 \gamma ,$$
+and the second directional diffusion model is
+$$ D_r = C_1 \gamma^{-1} \int_{\brho \in S^2} |\brho\cdot(\br\times(\dot{\tilde\brho}-\dot{\tilde \br}))|^2 \psi(\brho) \, d\brho +
+C_2 \gamma .$$
+\begin{itemize}
+\item The parameter set as {\tt do\_dd=1} will cause the first directional diffusion model to be used.
+\item The parameter set as {\tt do\_dd\_2=1} will cause the second directional diffusion model to be used.
+\item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
+\item The parameters {\tt C1} and {\tt C2} are the directional diffusion parameters $C_1$ and $C_2$.
+\end{itemize}
+
+\section*{Variable diffusion models}
+
+\noindent
+Define $s_\nu$ for $\nu=1,2$:
+$$ s_1 = \left|\int_{S^2} \Gamma:\brho\brho \psi(\brho) \, d\brho\right|
+   = |A :\Gamma| ,$$
+$$ s_2 = \left(\int_{S^2} \left|\Gamma:\brho\brho\right|^2 \psi(\brho) \, d\brho\right)^{1/2} = \left(\Gamma: \mathbb A:\Gamma\right)^{1/2} . $$
+The variable diffusion model sets the diffusion term in Jeffery's equation to $D_r = C_1 s_\nu$.
+\begin{itemize}
+\item The parameter {\tt do\_vd} can take the values {\tt 1} or {\tt 2}, and will cause the variable diffusion model to be used with the appropriate value of $\nu$.
+\item The parameter {\tt lambda} is the Jeffery's parameter $\lambda$.
+\item The parameter {\tt C1} is the parameter $C_1$.
+\end{itemize}
+
+\section*{Variable lambda models}
+
+\noindent
+The Jeffery's parameter is allowed to vary as $\lambda = \lambda_1 - \lambda_2 \gamma^{-1} s_\nu $.
+This can be used in conjunction with any of the diffusion models.
+\begin{itemize}
+\item The parameter {\tt do\_vl} can take the values {\tt 1} or {\tt 2}, and will cause the variable lambda model to be used with the appropriate value of $\nu$.
+\item The parameters {\tt lambda1} and {\tt lambda2} replace the parameter {\tt lambda}.
+\end{itemize}
+
+\section*{The RSC model of Wang, O'Gara and Tucker}
+
+\noindent
+This causes an artificial scaled reduction of the evolution of $\psi$, the ``Reduced-Strain Closure" model.  This can be used in conjunction with any of the other models.  It is described in \cite{rsc}, and the file {\tt rsc.pdf}.  It causes the P.D.E.\ 
+$$ \frac{\partial}{\partial t}\psi(\br) = F(\br),$$
+to be replaced by
+$$ \frac{\partial}{\partial t}\psi(\br) = F(\br) - \tfrac{15}{8\pi}(1-\kappa)(\br\br-\tfrac15 I):\mathbb M:\int_{S^2} F(\brho) \brho\brho \, d\brho,$$
+where $\mathbb M = \sum_{i=1}^3 \e_i\e_i\e_i\e_i$, with $\e_1$, $\e_2$, $\e_3$ being the orthonormal eigenvectors of $A$.
+
+This method has intellectual property restrictions \cite{rsc-pat}.  If you use {\tt do\_rsc=1}, the program will interrogate you to see if you comply with this patent.  You may switch off the interrogation by setting the environment variable {\tt MAY\_USE\_PATENT\_7266469}.
+
+\begin{itemize}
+\item The parameter set as {\tt do\_rsc=1} causes RSC to take place.
+\item The parameter {\tt kappa} sets the scale reduction factor $\kappa$.
+\end{itemize}
+
+\section*{The ARD model of Phelps and Tucker}
+
+\noindent
+This ``Anisotropic Rotary Diffusion'' model is described in \cite{ard}.  This is the same form as the Koch model, with
+$$ D_r = b_1 \gamma I + b_2 \gamma A + b_3 \gamma A^2 + \tfrac12{b_4} \Gamma + \tfrac14{b_5}\gamma^{-1} \Gamma^2 .$$
+
+\begin{itemize}
+\item The parameter set as {\tt do\_ard=1} causes ARD to be used.
+\item The parameters {\tt b1}, {\tt b2}, {\tt b3}, {\tt b4} and {\tt b5} set $b_1$, $b_2$, $b_3$, $b_4$ and $b_5$.
+\end{itemize}
+
+\section*{Acknowledgments}
+
+\noindent
+This work was supported by the National Science Foundation, Division of Civil, Mechanical and Manufacturing Innovation, award number 0727399 (NSF CMMI 0727399).
+
+\begin{thebibliography}{99}
+\bibitem{jeffery}
+G.B. Jeffery, The Motion of Ellipsoidal Particles Immersed in a Viscous Fluid, Proceedings of the Royal Society of London A {\bf 102}, 161-179, (1923).
+\bibitem{folgar}
+F.P. Folgar and C.L. Tucker, Orientation Behavior of Fibers in Concentrated Suspensions, Jn. of Reinforced Plastics and Composites {\bf 3}, 98-119 (1984).
+\bibitem{koch}
+D.L. Koch, A Model for Orientational Diffusion in Fiber Suspensions, Physics of Fluids {\bf 7}, 2086-2088 (1995).
+\bibitem{jack}
+D.A. Jack, Advanced analysis of short-fiber polymer composite material behavior, Ph.D.\ thesis, University of Missouri (2006).
+\bibitem{rsc-pat}
+C.L. Tucker III, J. Wang, and J.F. O'Gara, Method and article of manufacture for determining a rate of change of orientation of a plurality of fibers disposed in a fluid. U.S. Patent No. 7,266,469 (2007).
+\bibitem{rsc}
+Jin Wang, John F. O'Gara, and Charles L. Tucker, III, An objective model for slow orientation kinetics in concentrated fiber suspensions: Theory and rheological evidence, J. Rheology {\bf 52}, 1179-1200 (2008).
+\bibitem{ard}
+Jay H. Phelps and Charles L. Tucker III, An anisotropic rotary diffusion model for fiber orientation in short- and long-fiber thermoplastics, Journal of Non-Newtonian Fluid Mechanics, to appear (2008).
+\end{thebibliography}
+
+
+\end{document}
