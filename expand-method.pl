@@ -55,6 +55,7 @@ sub cform {
     $return =~ s/\r//g;
     $return =~ s/Power/pow/g;
     $return =~ s/Sqrt/sqrt/g;
+    $return =~ s/\c[.*//;
   }
   return $return;
 }
@@ -74,6 +75,7 @@ sub texform {
     $return =~ s/.*?Out\[\d+\]\/\/TeXForm\=\s+(.*)/\1/s || die;
     $return =~ s/\s//g;
     $return =~ s/\r//g;
+    $return =~ s/\c[.*//;
   }
   return $return;
 }
@@ -88,6 +90,7 @@ sub simplify {
     $in =~ s/Sqrt/sqrt/g;
     $in =~ s/R/rationalize/g;
     $mathcmd->send("string(fullratsimp($in));");
+    $mathcmd->send("");
     $return = $mathcmd->before;
     $return =~ s/.*?\(\%o\d+\)(.*)/\1/s || die;
     $return =~ s/\s//g;
@@ -101,6 +104,7 @@ sub simplify {
     $return =~ s/.*?Out\[\d+\]\/\/InputForm\=\s+(.*)/\1/s || die;
     $return =~ s/\s//g;
     $return =~ s/\r//g;
+    $return =~ s/\c[.*//;
   }
   return $return;
 }
